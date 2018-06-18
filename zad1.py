@@ -5,12 +5,13 @@ import numpy as np
 def read_csv(file_name):
     return pd.read_csv(file_name, sep=',', header=0).values
 
+
 def sprint_planning_helper(file, velocity):
     ID_STORY_POINTS = 1
     ID_KSP = 2
 
     data = read_csv(file)
-    number_of_items, weight = data.shape[0], velocity+1
+    number_of_items, weight = data.shape[0], velocity + 1
     matrix = np.zeros((number_of_items, weight))
 
     for i in range(number_of_items):
@@ -18,10 +19,10 @@ def sprint_planning_helper(file, velocity):
             if j == 0:
                 result = 0
             elif data[i, ID_STORY_POINTS] > j:
-                result = matrix[i-1, j]
+                result = matrix[i - 1, j]
             else:
-                tmp1 = matrix[i-1, j]
-                tmp2 = matrix[i-1, j-data[i, ID_STORY_POINTS]]+data[i, ID_KSP]
+                tmp1 = matrix[i - 1, j]
+                tmp2 = matrix[i - 1, j - data[i, ID_STORY_POINTS]] + data[i, ID_KSP]
                 result = max(tmp1, tmp2)
             matrix[i, j] = result
     print(matrix)
@@ -29,18 +30,22 @@ def sprint_planning_helper(file, velocity):
 
     return tasks
 
+
 def find_tasks(calculated_matrix, tasks_data):
     row, col = calculated_matrix.shape
     tasks = []
+    weight = np.max(calculated_matrix)
+    max_ind_y = 10
 
-    while row > 0 and col > 0:
-        max_ind = np.argmax(calculated_matrix[:row,:col])
-        x, y = int(max_ind/col), int(max_ind/row)
-        print(x, y)
-        tasks.append(x)
-        task_weight = tasks_data[x, 1]
-        print(task_weight)
+    while weight and max_ind_y != 0:
+        print(f'max col {max_ind_y}')
+        max_ind_x, max_ind_y = np.unravel_index(np.argmax(calculated_matrix[:row, :col]),
+                                                calculated_matrix[:row, :col].shape)
+        print(max_ind_x, max_ind_y)
+        tasks.append(max_ind_x)
+        task_weight = tasks_data[max_ind_x, 1]
+        weight -= task_weight
         col -= task_weight
         row -= 1
 
-    return tasks
+    return set(tasks)
