@@ -1,6 +1,5 @@
-./idea
+.idea/
 __pycache__
 *.iml
 *.xml
 *.csv
-*.txt
