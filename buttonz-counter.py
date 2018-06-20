@@ -3,6 +3,7 @@ import re
 import sys
 import urllib.request as req
 
+import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 
@@ -14,38 +15,34 @@ def buttonz_counter(file_with_websites, file_to_save):
     :return:
     """
     addresses = pd.read_csv(file_with_websites, header=None).values
+    addresses = np.reshape(addresses, (-1,))
     counted = []
 
-    for add in addresses:
-        count = 0
-        url = add[0]
+    for address in addresses:
+        url = give_valid_url(address)
         page = open_page(url)
+
         buttons = find_elements(page, "button")
         class_buttons = find_elements_with_class(page, has_class_button)
         type_buttons = find_elements_with_type(page, has_proper_type)
 
-        count += len(buttons)
+        count = len(buttons)
         count += len([elem for elem in class_buttons if elem not in buttons])
         count += len([elem for elem in type_buttons if elem not in buttons and elem not in class_buttons])
 
-        counted.append((add[0], count))
+        counted.append((address, count))
 
     counted = sorted(counted, key=lambda t: t[1], reverse=True)
 
     save_to_file(file_to_save, 'address, number_of_buttons', counted)
 
 
-def save_to_file(file_name, header, data):
-    """
-    :param file_name: Name of file to save data
-    :param header: Header string
-    :param data: data to save
-    :return:
-    """
-    with open(file_name, 'w') as f:
-        f.write(header + '\n')
-        for add, count in data:
-            f.write(f'{add}, {count} \n')
+def give_valid_url(url):
+    http_str = 'http://'
+    if url[:7] == http_str:
+        return url
+    else:
+        return http_str + url
 
 
 def open_page(page_url):
@@ -104,6 +101,19 @@ def has_proper_type(elem_type):
     reg_reset = re.compile('reset', re.IGNORECASE)
     reg_button = re.compile('button', re.IGNORECASE)
     return elem_type and (reg_submit.search(elem_type) or reg_button.search(elem_type) or reg_reset.search(elem_type))
+
+
+def save_to_file(file_name, header, data):
+    """
+    :param file_name: Name of file to save data
+    :param header: Header string
+    :param data: data to save
+    :return:
+    """
+    with open(file_name, 'w') as f:
+        f.write(header + '\n')
+        for add, count in data:
+            f.write(f'{add}, {count} \n')
 
 
 class WrongUrlException(Exception):
