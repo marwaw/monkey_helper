@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import re
 import sys
-import urllib.request
+import urllib.request as req
 
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -12,14 +12,18 @@ def buttonz_counter(file_with_websites, counted_websites):
     counted = []
 
     for add in addresses:
-        url = 'http://' + add[0]
+        count = 0
+        url = add[0]
         page = open_page(url)
-        all_buttonz = find_elements(page, "button")
-        all_buttonz += find_elements_with_class(page, has_class_button)
-        all_buttonz += find_elements_with_type(page, has_proper_type)
-        all = set(all_buttonz)
+        buttons = find_elements(page, "button")
+        class_buttons = find_elements_with_class(page, has_class_button)
+        type_buttons = find_elements_with_type(page, has_proper_type)
 
-        counted.append((add[0], len(all)))
+        count += len(buttons)
+        count += len([elem for elem in class_buttons if elem not in buttons])
+        count += len([elem for elem in type_buttons if elem not in buttons and elem not in class_buttons])
+
+        counted.append((add[0], count))
 
     counted = sorted(counted, key=lambda t: t[1], reverse=True)
 
@@ -34,7 +38,10 @@ def save_to_file(file_name, header, data):
 
 
 def open_page(page_url):
-    page = urllib.request.urlopen(page_url)
+    try:
+        page = req.urlopen(page_url)
+    except:
+        raise WrongUrlException(f'This URL is invalid {page_url}')
     return BeautifulSoup(page, "lxml")
 
 
@@ -62,7 +69,9 @@ def has_proper_type(elem_type):
     reg_button = re.compile('button', re.IGNORECASE)
     return elem_type and (reg_submit.search(elem_type) or reg_button.search(elem_type) or reg_reset.search(elem_type))
 
+class WrongUrlException(Exception):
+    pass
 
-address = sys.argv[1]
-file_to_save = sys.argv[2]
-buttonz_counter(address, file_to_save)
+
+if __name__ == '__main__':
+    buttonz_counter(sys.argv[1], sys.argv[2])
