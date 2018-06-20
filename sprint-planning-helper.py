@@ -6,29 +6,37 @@ import pandas as pd
 
 
 def sprint_planning_helper(file, velocity):
-    data = read_csv(file)
+    """
+    :param file: Name of file with tasks
+    :param velocity:
+    :return: tasks to choose
+    """
+    tasks_info = read_csv(file)
 
-    matrix = make_matrix(data, velocity)
-    tasks = find_tasks(matrix, data)
+    matrix = make_matrix(tasks_info, velocity)
+    tasks_nr = find_tasks(matrix, tasks_info)
+    tasks = []
+    for nr in tasks_nr:
+        tasks.append(tasks_info[nr, 0])
     return tasks
 
 
-def make_matrix(data, velocity):
+def make_matrix(tasks_info, velocity):
     ID_STORY_POINTS = 1
     ID_KSP = 2
 
-    number_of_items, weight = data.shape[0], velocity + 1
+    number_of_items, weight = tasks_info.shape[0], velocity + 1
     matrix = np.zeros((number_of_items, weight))
 
     for i in range(number_of_items):
         for j in range(weight):
             if j == 0:
                 result = 0
-            elif data[i, ID_STORY_POINTS] > j:
+            elif tasks_info[i, ID_STORY_POINTS] > j:
                 result = matrix[i - 1, j]
             else:
                 prev_value = matrix[i - 1, j]
-                current_value = matrix[i - 1, j - data[i, ID_STORY_POINTS]] + data[i, ID_KSP]
+                current_value = matrix[i - 1, j - tasks_info[i, ID_STORY_POINTS]] + tasks_info[i, ID_KSP]
                 result = max(prev_value, current_value)
             matrix[i, j] = result
     return matrix
